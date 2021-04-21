@@ -12,6 +12,9 @@ public:
 private:
     static struct Node *addStructure(struct Node *, const Token&, struct Node *, std::string);
     static void printPreorder(struct Node*);
+    static void traverseTree(struct Node*);
+    static void insertVar(std::string, int, bool, int);
+    static void searchVar(const std::string&, int);
     static Token getNewToken();
 
     static struct Node *programToken(struct Node *);
@@ -33,6 +36,13 @@ private:
     static struct Node *r0Token(struct Node *, struct Node *);
     static struct Node *labelToken(struct Node *, struct Node *);
     static struct Node *gotoToken(struct Node *, struct Node *);
+
+};
+
+struct varStack_t {
+    std::string name;
+    bool isGlobal;
+    int lineNumber = 0;
 };
 
 #endif //PARSER_H

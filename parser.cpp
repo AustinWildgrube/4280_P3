@@ -14,6 +14,9 @@ using namespace std;
 FILE *file;
 Token globalToken;
 char character, lookAhead;
+bool isGlobal = true;
+int varTotal;
+struct varStack_t varStack[99];
 
 /**
  * Main parse function
@@ -37,8 +40,12 @@ void Parser::parser(const char* fileName) {
     // Start parsing
     Parser::programToken(root);
 
-    // Print our parse tree
-    Parser::printPreorder(root);
+    // Traverse our parse tree
+    Parser::traverseTree(root);
+
+//    for (int i = 0; i < varTotal; i++) {
+//        cout << varStack[i].isGlobal << endl;
+//    }
 }
 
 /**
@@ -71,6 +78,8 @@ struct Node *Parser::addStructure(struct Node *node, const Token& token, struct 
             newNode->level = originNode->level + 1;
         }
 
+        newNode->lineNumber = token.lineNumber;
+
         return newNode;
     }
 
@@ -99,6 +108,105 @@ void Parser::printPreorder(struct Node* node) {
     Parser::printPreorder(node->childTwo);
     Parser::printPreorder(node->childThree);
     Parser::printPreorder(node->childFour);
+}
+
+/**
+ * Here we traverse our parse tree
+ * @param node
+ */
+void Parser::traverseTree(struct Node* node) {
+    string variableIdentifiers[99];
+
+    // Check to make sure tree isn't empty
+    if (node == nullptr)
+        return;
+
+    // TODO: fix global
+//    if (node->token.userInput == "main")
+//        isGlobal = false;
+
+    string word;
+    int count = 0;
+
+    if (!node->token.userInput.empty()) {
+        for (auto x : node->token.userInput) {
+            if (x != ' ') {
+                word += x;
+            } else {
+                variableIdentifiers[count] = word;
+                word = "";
+                count++;
+            }
+        }
+
+        if (!word.empty()) {
+            variableIdentifiers[count] = word;
+            word = "";
+        }
+
+        if (node->token.block == "<vars>") {
+            Parser::insertVar(variableIdentifiers[1], node->token.lineNumber, isGlobal, node->token.lineNumber);
+        } else if (node->token.block == "<R>") {
+            Parser::searchVar(variableIdentifiers[0], node->token.lineNumber);
+        } else if (node->token.block == "<label>" || node->token.block == "<in>" || node->token.block == "<goto>" ||
+                   node->token.block == "<assign>" || node->token.block == "<label>") {
+            Parser::searchVar(variableIdentifiers[1], node->token.lineNumber);
+        }
+    }
+
+
+    // Recursively process children
+    Parser::traverseTree(node->childOne);
+    Parser::traverseTree(node->childTwo);
+    Parser::traverseTree(node->childThree);
+    Parser::traverseTree(node->childFour);
+}
+
+/**
+ * This is where we are going to insert our variable on to the stack
+ * @param node
+ */
+void Parser::insertVar(string identifier, int identifierLine, bool global, int lineNumber) {
+    // Check to make sure it is not already in stack
+    for (int i = 0; i < varTotal; i++) {
+        if (varStack[i].name == identifier) {
+            cout << "[ERROR]: Variable " << identifier << " on line " << identifierLine <<
+                    " was previously declared on line " << varStack[i].lineNumber << endl;
+
+            exit(1);
+        }
+    }
+
+    // Insert the name, whether it is global or not, and the line number into the stack
+    varStack[varTotal].name = std::move(identifier);
+    varStack[varTotal].isGlobal = global;
+    varStack[varTotal].lineNumber = lineNumber;
+
+    // Increase our total
+    varTotal++;
+}
+
+/**
+ * This is where we are going to search for our variable on to the stack
+ * @param node
+ */
+void Parser::searchVar(const string& identifier, int identifierLine) {
+    bool isDeclared = false;
+
+    if (identifier.empty() || isdigit(identifier[0]))
+        return;
+
+    for (int i = 0; i < varTotal; i++) {
+        if (varStack[i].name == identifier) {
+            isDeclared = true;
+            break;
+        }
+    }
+
+    if (!isDeclared) {
+        cout << "[ERROR]: Variable " << identifier << " on line " << identifierLine << " has not been declared" << endl;
+        exit(1);
+    }
 }
 
 /**

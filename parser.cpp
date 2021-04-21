@@ -1,5 +1,5 @@
 // Author: Austin Wildgrube <akwwb6@mail.umsl.edu>
-// Date: 04/04/2021
+// Date: 04/20/2021
 
 #include <iostream>
 #include <cstdio>
@@ -13,10 +13,12 @@ using namespace std;
 
 FILE *file;
 Token globalToken;
-char character, lookAhead;
-bool isGlobal = true;
-int varTotal;
 struct varStack_t varStack[99];
+struct blockStack_t blockStack[99];
+char character, lookAhead;
+int varTotal;
+int blockCount;
+
 
 /**
  * Main parse function
@@ -42,10 +44,6 @@ void Parser::parser(const char* fileName) {
 
     // Traverse our parse tree
     Parser::traverseTree(root);
-
-//    for (int i = 0; i < varTotal; i++) {
-//        cout << varStack[i].isGlobal << endl;
-//    }
 }
 
 /**
@@ -111,7 +109,7 @@ void Parser::printPreorder(struct Node* node) {
 }
 
 /**
- * Here we traverse our parse tree
+ * Here we traverse our parse tree in preorder fashion and process the userInput.
  * @param node
  */
 void Parser::traverseTree(struct Node* node) {
@@ -124,10 +122,14 @@ void Parser::traverseTree(struct Node* node) {
     string word;
     int count = 0;
 
+    // Since our token.userInput is concatenated words we need to split them apart
     if (!node->token.userInput.empty()) {
         for (auto x : node->token.userInput) {
+            // Check for spaces between words
             if (x != ' ') {
                 word += x;
+
+            // Otherwise we concatenate the letter
             } else {
                 variableIdentifiers[count] = word;
                 word = "";
@@ -140,8 +142,25 @@ void Parser::traverseTree(struct Node* node) {
             word = "";
         }
 
+        // Here we check level to see what block we are in and if we need to pop
+        if (node->level <= blockStack[blockCount].blockLevel && blockCount != 0) {
+            //Pop block because we found the end
+            Parser::popVar();
+        }
+
+        // Here we are beginning a new block
+        if (node->token.block == "<block>") {
+            blockCount++;
+            blockStack[blockCount].blockLevel = node->level;
+        }
+
+        // If we have a vars block we need to add it to our stack
         if (node->token.block == "<vars>") {
+            blockStack[blockCount].varsInBlock++;
+
             Parser::insertVar(variableIdentifiers[1], node->token.lineNumber, node->token.lineNumber);
+
+        // If we have anything but a vars block we need to search to see if it was declared
         } else if (node->token.block == "<R>") {
             Parser::searchVar(variableIdentifiers[0], node->token.lineNumber);
         } else if (node->token.block == "<label>" || node->token.block == "<in>" || node->token.block == "<goto>" ||
@@ -149,7 +168,6 @@ void Parser::traverseTree(struct Node* node) {
             Parser::searchVar(variableIdentifiers[1], node->token.lineNumber);
         }
     }
-
 
     // Recursively process children
     Parser::traverseTree(node->childOne);
@@ -159,8 +177,10 @@ void Parser::traverseTree(struct Node* node) {
 }
 
 /**
- * This is where we are going to insert our variable on to the stack
- * @param node
+ * We insert the variable onto the stack to keep track of it throughout the traversal.
+ * @param identifier
+ * @param identifierLine
+ * @param lineNumber
  */
 void Parser::insertVar(string identifier, int identifierLine, int lineNumber) {
     // Check to make sure it is not already in stack
@@ -173,7 +193,7 @@ void Parser::insertVar(string identifier, int identifierLine, int lineNumber) {
         }
     }
 
-    // Insert the name, whether it is global or not, and the line number into the stack
+    // Insert the name and the line number into the stack
     varStack[varTotal].name = std::move(identifier);
     varStack[varTotal].lineNumber = lineNumber;
 
@@ -182,15 +202,32 @@ void Parser::insertVar(string identifier, int identifierLine, int lineNumber) {
 }
 
 /**
- * This is where we are going to search for our variable on to the stack
- * @param node
+ * Here we remove the variables from the top of the stack. We do this because the block has ended.
+ */
+void Parser::popVar() {
+    for (int i = blockStack[blockCount].varsInBlock; i > 0; i--) {
+        // Decrease our total
+        varTotal--;
+    }
+
+    // Reset the struct
+    blockStack[blockCount].varsInBlock = 0;
+    blockCount--;
+}
+
+/**
+ * Here we search for our variable to ensure that it has been declared
+ * @param identifier
+ * @param identifierLine
  */
 void Parser::searchVar(const string& identifier, int identifierLine) {
     bool isDeclared = false;
 
+    // Identifiers must start with a letter or _
     if (identifier.empty() || isdigit(identifier[0]))
         return;
 
+    // Check all vars in stack to see if it is there
     for (int i = 0; i < varTotal; i++) {
         if (varStack[i].name == identifier) {
             isDeclared = true;
@@ -198,6 +235,7 @@ void Parser::searchVar(const string& identifier, int identifierLine) {
         }
     }
 
+    // If it is not then we error and exit
     if (!isDeclared) {
         cout << "[ERROR]: Variable " << identifier << " on line " << identifierLine << " has not been declared" << endl;
         exit(1);

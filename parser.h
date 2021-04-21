@@ -14,6 +14,7 @@ private:
     static void printPreorder(struct Node*);
     static void traverseTree(struct Node*);
     static void insertVar(std::string, int, int);
+    static void popVar();
     static void searchVar(const std::string&, int);
     static Token getNewToken();
 
@@ -42,6 +43,11 @@ private:
 struct varStack_t {
     std::string name;
     int lineNumber = 0;
+};
+
+struct blockStack_t {
+    int varsInBlock = 0;
+    int blockLevel = 0;
 };
 
 #endif //PARSER_H

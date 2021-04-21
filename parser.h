@@ -41,7 +41,6 @@ private:
 
 struct varStack_t {
     std::string name;
-    bool isGlobal;
     int lineNumber = 0;
 };
 

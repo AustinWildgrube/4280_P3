@@ -121,10 +121,6 @@ void Parser::traverseTree(struct Node* node) {
     if (node == nullptr)
         return;
 
-    // TODO: fix global
-//    if (node->token.userInput == "main")
-//        isGlobal = false;
-
     string word;
     int count = 0;
 

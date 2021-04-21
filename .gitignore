@@ -143,4 +143,4 @@ Temporary Items
 /P1
 /scanner.o
 /parser.o
-/frontEnd
+/statSem

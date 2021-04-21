@@ -13,7 +13,7 @@ private:
     static struct Node *addStructure(struct Node *, const Token&, struct Node *, std::string);
     static void printPreorder(struct Node*);
     static void traverseTree(struct Node*);
-    static void insertVar(std::string, int, bool, int);
+    static void insertVar(std::string, int, int);
     static void searchVar(const std::string&, int);
     static Token getNewToken();
 

@@ -141,7 +141,7 @@ void Parser::traverseTree(struct Node* node) {
         }
 
         if (node->token.block == "<vars>") {
-            Parser::insertVar(variableIdentifiers[1], node->token.lineNumber, isGlobal, node->token.lineNumber);
+            Parser::insertVar(variableIdentifiers[1], node->token.lineNumber, node->token.lineNumber);
         } else if (node->token.block == "<R>") {
             Parser::searchVar(variableIdentifiers[0], node->token.lineNumber);
         } else if (node->token.block == "<label>" || node->token.block == "<in>" || node->token.block == "<goto>" ||
@@ -162,7 +162,7 @@ void Parser::traverseTree(struct Node* node) {
  * This is where we are going to insert our variable on to the stack
  * @param node
  */
-void Parser::insertVar(string identifier, int identifierLine, bool global, int lineNumber) {
+void Parser::insertVar(string identifier, int identifierLine, int lineNumber) {
     // Check to make sure it is not already in stack
     for (int i = 0; i < varTotal; i++) {
         if (varStack[i].name == identifier) {
@@ -175,7 +175,6 @@ void Parser::insertVar(string identifier, int identifierLine, bool global, int l
 
     // Insert the name, whether it is global or not, and the line number into the stack
     varStack[varTotal].name = std::move(identifier);
-    varStack[varTotal].isGlobal = global;
     varStack[varTotal].lineNumber = lineNumber;
 
     // Increase our total

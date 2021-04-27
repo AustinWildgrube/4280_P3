@@ -43,6 +43,8 @@ private:
 struct varStack_t {
     std::string name;
     int lineNumber = 0;
+    bool isGlobal = true;
+    int blockCount = 0;
 };
 
 struct blockStack_t {

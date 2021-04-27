@@ -18,6 +18,7 @@ struct blockStack_t blockStack[99];
 char character, lookAhead;
 int varTotal;
 int blockCount;
+bool isGlobal = true;
 
 
 /**
@@ -132,6 +133,11 @@ void Parser::traverseTree(struct Node* node) {
             // Otherwise we concatenate the letter
             } else {
                 variableIdentifiers[count] = word;
+
+                if (word == "begin") {
+                    isGlobal = false;
+                }
+
                 word = "";
                 count++;
             }
@@ -139,6 +145,11 @@ void Parser::traverseTree(struct Node* node) {
 
         if (!word.empty()) {
             variableIdentifiers[count] = word;
+
+            if (word == "begin") {
+                isGlobal = false;
+            }
+
             word = "";
         }
 
@@ -186,16 +197,23 @@ void Parser::insertVar(string identifier, int identifierLine, int lineNumber) {
     // Check to make sure it is not already in stack
     for (int i = 0; i < varTotal; i++) {
         if (varStack[i].name == identifier) {
-            cout << "[ERROR]: Variable " << identifier << " on line " << identifierLine <<
-                    " was previously declared on line " << varStack[i].lineNumber << endl;
+            // We get 2 situations here. Either the variable is global and there is another global or
+            // it isn't global and is in the same block
+            if ((isGlobal && varStack[i].isGlobal) ||
+                (!isGlobal && !varStack[i].isGlobal && varStack[i].blockCount == blockCount)) {
+                cout << "[ERROR]: Variable " << identifier << " on line " << identifierLine <<
+                        " was previously declared on line " << varStack[i].lineNumber << endl;
 
-            exit(1);
+                exit(1);
+            }
         }
     }
 
-    // Insert the name and the line number into the stack
+    // Insert the name, if it is global, and the line number into the stack
     varStack[varTotal].name = std::move(identifier);
     varStack[varTotal].lineNumber = lineNumber;
+    varStack[varTotal].isGlobal = isGlobal;
+    varStack[varTotal].blockCount = blockCount;
 
     // Increase our total
     varTotal++;

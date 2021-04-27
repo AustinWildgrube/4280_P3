@@ -35,6 +35,7 @@ void Parser::parser(const char* fileName) {
     Token fakeToken;
     fakeToken.block = "<program>";
     fakeToken.userInput = "main";
+    fakeToken.lineNumber = globalToken.lineNumber;
     root = Parser::addStructure(root, fakeToken, nullptr, "");
 
     // Get our first token
@@ -253,6 +254,7 @@ void Parser::searchVar(const string& identifier, int identifierLine) {
         }
     }
 
+
     // If it is not then we error and exit
     if (!isDeclared) {
         cout << "[ERROR]: Variable " << identifier << " on line " << identifierLine << " has not been declared" << endl;
@@ -431,6 +433,7 @@ struct Node *Parser::exprToken(struct Node* node, struct Node* originNode) {
     // We need to add a node a head of time so we can pass down the children
     Token fakeToken;
     fakeToken.block = "<expr>";
+    fakeToken.lineNumber = globalToken.lineNumber;
 
     node = Parser::addStructure(node, fakeToken, originNode);
 
@@ -460,6 +463,7 @@ struct Node *Parser::nToken(struct Node* node, struct Node* originNode) {
     // We need to add a node a head of time so we can pass down the children
     Token fakeToken;
     fakeToken.block = "<N>";
+    fakeToken.lineNumber = globalToken.lineNumber;
     node = Parser::addStructure(node, fakeToken, originNode);
 
     node->childOne = Parser::aToken(node->childOne, node);
@@ -484,6 +488,7 @@ struct Node *Parser::nToken(struct Node* node, struct Node* originNode) {
 struct Node *Parser::aToken(struct Node* node, struct Node* originNode) {
     Token fakeToken;
     fakeToken.block = "<A>";
+    fakeToken.lineNumber = globalToken.lineNumber;
     node = Parser::addStructure(node, fakeToken, originNode);
 
     node->childOne = Parser::mToken(node->childOne, node);
@@ -509,6 +514,7 @@ struct Node *Parser::aToken(struct Node* node, struct Node* originNode) {
 struct Node *Parser::mToken(struct Node* node, struct Node* originNode) {
     Token fakeToken;
     fakeToken.block = "<M>";
+    fakeToken.lineNumber = globalToken.lineNumber;
 
     // Here we can have a * and if we don;t we just go to the r token
     if (globalToken.id == "OP_tk" && globalToken.userInput == "*") {
@@ -537,6 +543,7 @@ struct Node *Parser::mToken(struct Node* node, struct Node* originNode) {
 struct Node *Parser::rToken(struct Node* node, struct Node* originNode) {
     Token fakeToken;
     fakeToken.block = "<R>";
+    fakeToken.lineNumber = globalToken.lineNumber;
 
     // If we find a ( it means we are going into an expression
     if (globalToken.id == "DEL_tk" && globalToken.userInput == "(") {
@@ -580,6 +587,7 @@ struct Node *Parser::rToken(struct Node* node, struct Node* originNode) {
 struct Node *Parser::statsToken(struct Node* node, struct Node* originNode) {
     Token fakeToken;
     fakeToken.block = "<stats>";
+    fakeToken.lineNumber = globalToken.lineNumber;
 
     node = Parser::addStructure(node, fakeToken, originNode);
 
@@ -603,6 +611,7 @@ struct Node *Parser::mStatToken(struct Node* node, struct Node* originNode) {
     if (globalToken.id == "KW_tk" && globalToken.userInput != "end") {
         Token fakeToken;
         fakeToken.block = "<mStat>";
+        fakeToken.lineNumber = globalToken.lineNumber;
 
         node = Parser::addStructure(node, fakeToken, originNode);
 
@@ -632,6 +641,7 @@ struct Node *Parser::statToken(struct Node* node, struct Node* originNode) {
     Token fakeToken;
     fakeToken.block = "<stat>";
     fakeToken.userInput = ";";
+    fakeToken.lineNumber = globalToken.lineNumber;
 
     node = Parser::addStructure(node, fakeToken, originNode);
 
@@ -705,6 +715,7 @@ struct Node *Parser::outToken(struct Node* node, struct Node* originNode) {
     Token fakeToken;
     fakeToken.block = "<out>";
     fakeToken.userInput = "outter";
+    fakeToken.lineNumber = globalToken.lineNumber;
 
     node = Parser::addStructure(node, fakeToken, originNode);
 
@@ -725,6 +736,7 @@ struct Node *Parser::ifToken(struct Node* node, struct Node* originNode) {
     Token fakeToken;
     fakeToken.block = "<if>";
     fakeToken.userInput = "if [ ] then";
+    fakeToken.lineNumber = globalToken.lineNumber;
 
     node = Parser::addStructure(node, fakeToken, originNode);
 
@@ -791,6 +803,7 @@ struct Node *Parser::loopToken(struct Node* node, struct Node* originNode) {
     Token fakeToken;
     fakeToken.block = "<loop>";
     fakeToken.userInput = "loop [ ]";
+    fakeToken.lineNumber = globalToken.lineNumber;
 
     node = Parser::addStructure(node, fakeToken, originNode);
 
